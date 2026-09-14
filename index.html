@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>정예 부대 T10 최소트리 계산기</title>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+:root{
+  --bg:#0a0f17;
+  --bg2:#0d1420;
+  --panel:#111a27;
+  --panel2:#152131;
+  --line:#243244;
+  --line2:#31465f;
+  --text:#eef4f9;
+  --muted:#8c9baa;
+  --soft:#b7c4cf;
+  --accent:#7ec8e3;
+  --accent2:#4e9fbe;
+  --good:#8494aa;
+  --danger:#d58b94;
+  --shadow:0 18px 40px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 20% -10%,rgba(65,110,145,.12),transparent 34%),
+    radial-gradient(circle at 85% 18%,rgba(56,95,130,.08),transparent 28%),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+  letter-spacing:-.02em;
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.wrap{
+  width:min(100%,820px);
+  margin:0 auto;
+  padding:18px 14px 44px;
+}
+.hero{
+  position:relative;
+  overflow:hidden;
+  padding:28px 22px 24px;
+  border:1px solid #203043;
+  border-radius:24px;
+  background:
+    linear-gradient(180deg,rgba(21,33,48,.98),rgba(14,23,35,.98));
+  box-shadow:var(--shadow);
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  width:260px;height:260px;
+  right:-90px;top:-120px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(126,200,227,.09),transparent 68%);
+  pointer-events:none;
+}
+.hero h1{
+  margin:0 0 8px;
+  font-size:27px;
+  font-weight:800;
+  letter-spacing:-.045em;
+}
+.hero p{
+  margin:0;
+  max-width:620px;
+  color:#9fb0bf;
+  font-size:14px;
+  line-height:1.65;
+}
+.card{
+  margin-top:14px;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:rgba(16,25,38,.96);
+  box-shadow:0 14px 34px rgba(0,0,0,.18);
+}
+h2{
+  margin:0 0 6px;
+  font-size:18px;
+  font-weight:780;
+  letter-spacing:-.035em;
+}
+.sub{
+  margin:0 0 14px;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.6;
+}
+
+/* top toolbar */
+.toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.mini{
+  appearance:none;
+  border:1px solid #2b3d52;
+  background:#162232;
+  color:#cbd6df;
+  border-radius:10px;
+  padding:8px 11px;
+  font-size:12px;
+  font-weight:700;
+}
+.mini:active{transform:translateY(1px)}
+
+/* research tree */
+.tree{
+  position:relative;
+  padding:18px 8px 8px;
+  border:1px solid #1f2d3d;
+  border-radius:18px;
+  background:
+    linear-gradient(180deg,#0c131e 0%,#0d1723 100%);
+}
+.tree-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  align-items:start;
+  min-height:120px;
+  position:relative;
+}
+.tree-row::before,.tree-row::after,.slot::before,.slot::after{
+  display:none!important;
+  content:none!important;
+}
+.slot{
+  display:flex;
+  justify-content:center;
+  position:relative;
+}
+.nodebox{
+  width:108px;
+  text-align:center;
+}
+
+/* premium dark node */
+.hex{
+  position:relative;
+  width:76px;
+  height:84px;
+  margin:0 auto;
+  border:0;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:#20374b;
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  -webkit-clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+}
+.hex::before{
+  content:"";
+  position:absolute;
+  inset:2px;
+  background:#0f1a27;
+  clip-path:inherit;
+  -webkit-clip-path:inherit;
+}
+.hex::after{
+  content:"";
+  position:absolute;
+  inset:5px;
+  background:
+    linear-gradient(180deg,rgba(74,111,139,.18),rgba(25,40,56,.28));
+  border:1px solid rgba(126,200,227,.14);
+  clip-path:inherit;
+  -webkit-clip-path:inherit;
+}
+.hex.done{background:#33445c}
+.hex.done::after{
+  background:linear-gradient(180deg,rgba(65,82,108,.24),rgba(27,39,57,.38));
+}
+.hex .ico{
+  position:relative;
+  z-index:3;
+  width:48px;
+  height:48px;
+  margin-top:-6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.hex .ico img{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
+}
+.hex .lv{
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:7px;
+  transform:translateX(-50%);
+  color:#f5f8fb;
+  font-size:11px;
+  line-height:1;
+  font-weight:800;
+  white-space:nowrap;
+  text-shadow:0 1px 2px rgba(0,0,0,.8);
+}
+.nm{
+  margin-top:7px;
+  min-height:30px;
+  color:#dbe4eb;
+  font-size:11.5px;
+  line-height:1.35;
+  font-weight:700;
+}
+.ctrl{
+  display:flex;
+  justify-content:center;
+  gap:4px;
+  margin-top:6px;
+}
+.minus,.node-reset,.lvin{
+  height:29px;
+  border:1px solid #293c50;
+  background:#121d2a;
+  color:#cbd5dd;
+  border-radius:8px;
+}
+.minus{
+  width:30px;
+  font-size:15px;
+  line-height:1;
+}
+.lvin{
+  width:44px;
+  padding:3px 4px;
+  text-align:center;
+  font-size:12px;
+}
+.node-reset{
+  padding:0 7px;
+  font-size:10px;
+  font-weight:700;
+}
+.target{
+  margin-top:4px;
+  color:#66798a;
+  font-size:10px;
+}
+.target strong{color:#8dcce2}
+
+/* resource form */
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.full{grid-column:1/-1}
+label{
+  display:block;
+  margin:0 0 6px;
+  color:#c4d0d9;
+  font-size:12px;
+  font-weight:700;
+}
+input.big,textarea{
+  width:100%;
+  border:1px solid #283b50;
+  background:#0d1622;
+  color:#f0f5f8;
+  border-radius:11px;
+  padding:11px 12px;
+  font-size:14px;
+  outline:none;
+}
+input.big:focus,textarea:focus{
+  border-color:#4f819a;
+  box-shadow:0 0 0 3px rgba(126,200,227,.08);
+}
+.btn{
+  width:100%;
+  margin-top:11px;
+  border:1px solid #37546f;
+  border-radius:12px;
+  padding:12px 14px;
+  background:#1a2b3e;
+  color:#edf4f8;
+  font-size:14px;
+  font-weight:800;
+}
+.btn:hover{background:#20354b}
+.btn.soft{
+  background:#131f2e;
+  border-color:#2b3f55;
+  color:#cdd7df;
+}
+.btn.danger{
+  background:#25181d;
+  border-color:#5b343d;
+  color:#e7b5bb;
+}
+
+/* result */
+.result{
+  margin-top:12px;
+  padding:10px 13px;
+  border:1px solid #22384a;
+  background:#0d1824;
+  border-radius:14px;
+}
+.r{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  padding:8px 0;
+  border-bottom:1px solid #1c2a38;
+  font-size:12.5px;
+}
+.r:last-child{border-bottom:0}
+.r span{color:#97a7b5}
+.r b{
+  color:#edf3f7;
+  text-align:right;
+  font-weight:800;
+}
+.ok{color:var(--good)!important}
+.bad{color:var(--danger)!important}
+
+/* tabs */
+.tabs{
+  display:flex;
+  gap:7px;
+  margin-top:12px;
+}
+.tab{
+  flex:1;
+  border:1px solid #273b50;
+  background:#111c29;
+  color:#8fa0ae;
+  border-radius:10px;
+  padding:9px 10px;
+  font-size:12px;
+  font-weight:800;
+}
+.tab.on{
+  background:#1b2f43;
+  color:#eaf3f8;
+  border-color:#42627f;
+}
+.panel{display:none}
+.panel.on{display:block}
+.notice{
+  margin-top:10px;
+  padding:11px 12px;
+  border:1px solid #293e53;
+  background:#101b28;
+  color:#aebbc6;
+  border-radius:11px;
+  font-size:11.5px;
+  line-height:1.55;
+}
+.plan{margin-top:7px}
+.step{
+  display:grid;
+  grid-template-columns:34px 1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:9px 0;
+  border-bottom:1px solid #1b2936;
+}
+.step:last-child{border-bottom:0}
+.ord{
+  width:28px;height:28px;
+  display:flex;
+  align-items:center;justify-content:center;
+  border:1px solid #30475d;
+  border-radius:9px;
+  background:#132031;
+  color:#9fcce0;
+  font-size:11px;
+  font-weight:800;
+}
+.step .who{
+  color:#e5edf3;
+  font-size:12px;
+  font-weight:800;
+}
+.step .cost{
+  margin-top:2px;
+  color:#758696;
+  font-size:10.5px;
+}
+.step .after{
+  color:#8fcbe2;
+  font-size:11px;
+  font-weight:800;
+}
+textarea{
+  min-height:90px;
+  margin-top:8px;
+  resize:vertical;
+  font-size:11px;
+}
+.buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+details{margin-top:10px}
+summary{
+  cursor:pointer;
+  color:#c7d3dc;
+  font-size:12px;
+  font-weight:800;
+}
+.req-list{
+  color:#8192a1;
+  font-size:11px;
+  line-height:1.6;
+}
+
+@media(max-width:520px){
+  .wrap{padding:10px 8px 30px}
+  .hero{padding:22px 16px 20px;border-radius:20px}
+  .hero h1{font-size:23px}
+  .card{padding:15px;border-radius:18px}
+  .tree{padding:16px 2px 6px}
+  .tree-row{min-height:116px}
+  .nodebox{width:98px}
+  .hex{width:70px;height:78px}
+  .hex .ico,.hex .ico img{width:45px;height:45px}
+  .nm{font-size:10.8px}
+  .grid{grid-template-columns:1fr 1fr}
+  .r{font-size:12px}
+}
+</style>
+
+
+<style>
+/* 이름 ↔ 조작버튼 간격만 축소. 아이콘 디자인은 변경하지 않음 */
+.nm{
+  min-height:0!important;
+  margin-top:7px!important;
+  margin-bottom:2px!important;
+}
+.ctrl{
+  margin-top:2px!important;
+}
+</style>
+
+
+<style>
+/* v27: 이름 ↔ 조작버튼 간격 중간값 */
+.nm{
+  min-height:0!important;
+  margin-top:7px!important;
+  margin-bottom:6px!important;
+}
+.ctrl{
+  margin-top:5px!important;
+}
+</style>
+
+
+<style>
+/* v28: 아이콘(노드)끼리 간격 확대 — 아이콘 디자인 자체는 유지 */
+.tree-row{
+  column-gap:18px!important;
+  min-height:136px!important;
+  margin-bottom:10px!important;
+}
+.slot{
+  padding-left:5px!important;
+  padding-right:5px!important;
+}
+.nodebox{
+  width:104px!important;
+}
+@media(max-width:520px){
+  .tree{
+    padding-left:6px!important;
+    padding-right:6px!important;
+  }
+  .tree-row{
+    column-gap:12px!important;
+    min-height:132px!important;
+    margin-bottom:9px!important;
+  }
+  .slot{
+    padding-left:3px!important;
+    padding-right:3px!important;
+  }
+  .nodebox{
+    width:100px!important;
+  }
+}
+</style>
+
+
+<style>
+/* v29: v28의 가로 간격/아이콘은 유지하고 세로 간격만 조정 */
+.tree-row{
+  min-height:124px!important;
+  margin-bottom:4px!important;
+}
+@media(max-width:520px){
+  .tree-row{
+    min-height:122px!important;
+    margin-bottom:4px!important;
+  }
+}
+</style>
+
+
+<style>
+/* v30: 세로 간격은 v29 유지, 3열만 화면 안쪽으로 모음 */
+@media(max-width:520px){
+  .tree-row{
+    column-gap:4px!important;
+  }
+  .slot{
+    padding-left:0!important;
+    padding-right:0!important;
+    min-width:0!important;
+  }
+  .nodebox{
+    width:94px!important;
+    max-width:94px!important;
+  }
+}
+</style>
+
+
+<style>
+/* v32: 현재 가로 배치 유지, 세로 간격만 살짝 확대 */
+.tree-row{
+  min-height:128px!important;
+  margin-bottom:6px!important;
+}
+@media(max-width:520px){
+  .tree-row{
+    min-height:127px!important;
+    margin-bottom:6px!important;
+  }
+}
+</style>
+
+</head>
+<body>
+<main class="wrap">
+<section class="hero">
+  <h1>정예 부대 T10 최소트리 계산기</h1>
+  <p>현재 연구 상태를 찍으면 T10까지 남은 최소 연구량을 계산하고, 가진 자원·스크롤로 최소트리를 어디까지 진행할 수 있는지 추천합니다.</p>
+</section>
+
+<section class="card">
+  <h2>현재 연구 상태</h2>
+  <p class="sub">육각형 터치 +1 · ↶ 버튼 -1 · 숫자 직접 입력 가능 · 변경 즉시 자동 저장</p>
+  <div class="toolbar">
+    <button class="mini" id="zeroAll">전체 리셋</button>
+    <button class="mini" id="fillMin">T10 최소트리 채우기</button>
+  </div>
+  <div id="tree" class="tree"></div>
+</section>
+
+<section class="card">
+  <h2>보유 자원 / 설정</h2>
+  <p class="sub">자원은 M 단위. 빈칸은 0으로 계산합니다. 자원 감소율은 식량·목재·약초에만 적용하고 연구 스크롤에는 적용하지 않습니다.</p>
+  <div class="grid">
+    <div><label>식량 (M)</label><input id="grain" class="big" inputmode="decimal"></div>
+    <div><label>목재 (M)</label><input id="timber" class="big" inputmode="decimal"></div>
+    <div><label>약초 (M)</label><input id="herbs" class="big" inputmode="decimal"></div>
+    <div><label>연구 스크롤 (장)</label><input id="scrolls" class="big" inputmode="numeric"></div>
+    <div><label>연구 자원 감소 (%)</label><input id="discount" class="big" inputmode="decimal" placeholder="0"></div>
+    <div><label>연구실 레벨</label><input id="lab" class="big" inputmode="numeric" placeholder="30"></div>
+  </div>
+  <button class="btn" id="calc">계산하기</button>
+
+  <div class="result">
+    <div class="r"><span>현재 연구 레벨 합계</span><b id="currentSum">0 / 221</b></div>
+    <div class="r"><span>T10 최소트리 기준</span><b id="minTreeLevels">90단계</b></div>
+    <div class="r"><span>T10까지 남은 필수 단계</span><b id="remainSteps">-</b></div>
+    <div class="r"><span>필요 식량</span><b id="needGrain">-</b></div>
+    <div class="r"><span>필요 목재</span><b id="needTimber">-</b></div>
+    <div class="r"><span>필요 약초</span><b id="needHerbs">-</b></div>
+    <div class="r"><span>필요 연구 스크롤</span><b id="needScrolls">-</b></div>
+    <div class="r"><span>T10 해금 가능 여부</span><b id="canT10">-</b></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="route">보유량 추천 순서</button>
+    <button class="tab" data-tab="minimum">T10 최소트리</button>
+  </div>
+  <div id="route" class="panel on">
+    <div id="routeSummary" class="notice">계산하기를 눌러주세요.</div>
+    <div id="routeList" class="plan"></div>
+  </div>
+  <div id="minimum" class="panel">
+    <div id="minimumList" class="plan"></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>저장 / 불러오기</h2>
+  <p class="sub">같은 브라우저에서는 자동 저장됩니다. 다른 기기로 옮길 때는 저장코드를 사용하세요.</p>
+  <div class="buttons">
+    <button class="btn soft" id="exportBtn">저장코드 만들기</button>
+    <button class="btn soft" id="copyBtn">코드 복사</button>
+  </div>
+  <textarea id="code" placeholder="저장코드 표시 / 불러올 코드 붙여넣기"></textarea>
+  <button class="btn" id="importBtn">저장코드 불러오기</button>
+  <button class="btn danger" id="resetBtn">저장값 초기화</button>
+</section>
+</main>
+
+<script>
+const TREE = {"techType":6,"nodes":[{"techId":205,"position":{"row":1,"column":2},"parents":[],"frame":"plain","icon":86,"rate":false,"levels":[{"level":1,"might":2620,"value":100,"cost":{"grain":921000,"timber":921000,"herbs":2791000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":191,"level":1}]},{"level":2,"might":5210,"value":200,"cost":{"grain":921000,"timber":921000,"herbs":2791000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15}]},{"level":3,"might":7810,"value":300,"cost":{"grain":921000,"timber":921000,"herbs":2791000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15}]},{"level":4,"might":10820,"value":400,"cost":{"grain":1277000,"timber":1277000,"herbs":3925000,"scrolls":280},"upgradeTimeSeconds":33400,"requires":[{"kind":"researchLab","level":16}]},{"level":5,"might":13820,"value":500,"cost":{"grain":1277000,"timber":1277000,"herbs":3925000,"scrolls":280},"upgradeTimeSeconds":33400,"requires":[{"kind":"researchLab","level":16}]},{"level":6,"might":17810,"value":600,"cost":{"grain":2285000,"timber":2285000,"herbs":6928000,"scrolls":320},"upgradeTimeSeconds":60100,"requires":[{"kind":"researchLab","level":17}]},{"level":7,"might":21810,"value":700,"cost":{"grain":2285000,"timber":2285000,"herbs":6928000,"scrolls":320},"upgradeTimeSeconds":60600,"requires":[{"kind":"researchLab","level":17}]},{"level":8,"might":26420,"value":800,"cost":{"grain":3026000,"timber":3026000,"herbs":8976000,"scrolls":400},"upgradeTimeSeconds":103000,"requires":[{"kind":"researchLab","level":18}]},{"level":9,"might":31010,"value":900,"cost":{"grain":3026000,"timber":3026000,"herbs":8976000,"scrolls":400},"upgradeTimeSeconds":103000,"requires":[{"kind":"researchLab","level":18}]},{"level":10,"might":37120,"value":1000,"cost":{"grain":5149000,"timber":5149000,"herbs":15350000,"scrolls":520},"upgradeTimeSeconds":165000,"requires":[{"kind":"researchLab","level":19}]}],"name":"체력 강화 1"},{"techId":206,"position":{"row":2,"column":1},"parents":[{"row":1,"column":2}],"frame":"plain","icon":87,"rate":false,"levels":[{"level":1,"might":2620,"value":0.24,"cost":{"grain":926000,"timber":926000,"herbs":2700000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":205,"level":1}]},{"level":2,"might":5210,"value":0.48,"cost":{"grain":900000,"timber":900000,"herbs":2748000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":205,"level":2}]},{"level":3,"might":7810,"value":0.72,"cost":{"grain":900000,"timber":900000,"herbs":2748000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":205,"level":3}]},{"level":4,"might":10820,"value":0.96,"cost":{"grain":1259000,"timber":1259000,"herbs":3901000,"scrolls":280},"upgradeTimeSeconds":33400,"requires":[{"kind":"researchLab","level":16},{"kind":"tech","techId":205,"level":4}]},{"level":5,"might":13810,"value":1.2,"cost":{"grain":1259000,"timber":1259000,"herbs":3901000,"scrolls":280},"upgradeTimeSeconds":33400,"requires":[{"kind":"researchLab","level":16},{"kind":"tech","techId":205,"level":5}]},{"level":6,"might":17820,"value":1.43,"cost":{"grain":2308000,"timber":2308000,"herbs":6971000,"scrolls":320},"upgradeTimeSeconds":60100,"requires":[{"kind":"researchLab","level":17},{"kind":"tech","techId":205,"level":6}]},{"level":7,"might":21820,"value":1.67,"cost":{"grain":2308000,"timber":2308000,"herbs":6971000,"scrolls":320},"upgradeTimeSeconds":60600,"requires":[{"kind":"researchLab","level":17},{"kind":"tech","techId":205,"level":7}]},{"level":8,"might":26420,"value":1.91,"cost":{"grain":2928000,"timber":2928000,"herbs":8984000,"scrolls":400},"upgradeTimeSeconds":103000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":205,"level":8}]},{"level":9,"might":31010,"value":2.15,"cost":{"grain":2928000,"timber":2928000,"herbs":8984000,"scrolls":400},"upgradeTimeSeconds":103000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":205,"level":9}]},{"level":10,"might":37110,"value":2.39,"cost":{"grain":5207000,"timber":5207000,"herbs":15509000,"scrolls":520},"upgradeTimeSeconds":165000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":205,"level":10}]}],"name":"공격력 강화 1"},{"techId":207,"position":{"row":2,"column":3},"parents":[{"row":1,"column":2}],"frame":"plain","icon":88,"rate":false,"levels":[{"level":1,"might":2620,"value":0.24,"cost":{"grain":920000,"timber":920000,"herbs":2773000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":205,"level":1}]},{"level":2,"might":5220,"value":0.48,"cost":{"grain":902000,"timber":902000,"herbs":2774000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":205,"level":2}]},{"level":3,"might":7830,"value":0.72,"cost":{"grain":902000,"timber":902000,"herbs":2774000,"scrolls":240},"upgradeTimeSeconds":17400,"requires":[{"kind":"researchLab","level":15},{"kind":"tech","techId":205,"level":3}]},{"level":4,"might":10820,"value":0.96,"cost":{"grain":1292000,"timber":1292000,"herbs":3856000,"scrolls":280},"upgradeTimeSeconds":33400,"requires":[{"kind":"researchLab","level":16},{"kind":"tech","techId":205,"level":4}]},{"level":5,"might":13810,"value":1.2,"cost":{"grain":1292000,"timber":1292000,"herbs":3856000,"scrolls":280},"upgradeTimeSeconds":33400,"requires":[{"kind":"researchLab","level":16},{"kind":"tech","techId":205,"level":5}]},{"level":6,"might":17820,"value":1.43,"cost":{"grain":2309000,"timber":2309000,"herbs":6785000,"scrolls":320},"upgradeTimeSeconds":60100,"requires":[{"kind":"researchLab","level":17},{"kind":"tech","techId":205,"level":6}]},{"level":7,"might":21810,"value":1.67,"cost":{"grain":2309000,"timber":2309000,"herbs":6785000,"scrolls":320},"upgradeTimeSeconds":60600,"requires":[{"kind":"researchLab","level":17},{"kind":"tech","techId":205,"level":7}]},{"level":8,"might":26410,"value":1.91,"cost":{"grain":2965000,"timber":2965000,"herbs":8796000,"scrolls":400},"upgradeTimeSeconds":103000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":205,"level":8}]},{"level":9,"might":31020,"value":2.15,"cost":{"grain":2965000,"timber":2965000,"herbs":8796000,"scrolls":400},"upgradeTimeSeconds":103000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":205,"level":9}]},{"level":10,"might":37120,"value":2.39,"cost":{"grain":5286000,"timber":5286000,"herbs":15514000,"scrolls":520},"upgradeTimeSeconds":165000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":205,"level":10}]}],"name":"방어력 강화 1"},{"techId":208,"position":{"row":3,"column":2},"parents":[{"row":2,"column":1},{"row":2,"column":3}],"frame":"glow","icon":89,"rate":true,"levels":[{"level":1,"might":4010,"value":0.015,"cost":{"grain":2273000,"timber":2273000,"herbs":6919000,"scrolls":320},"upgradeTimeSeconds":59500,"requires":[{"kind":"researchLab","level":17},{"kind":"tech","techId":206,"level":1},{"kind":"tech","techId":207,"level":1}]},{"level":2,"might":8620,"value":0.03,"cost":{"grain":2995000,"timber":2995000,"herbs":8877000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":206,"level":2},{"kind":"tech","techId":207,"level":2}]},{"level":3,"might":13220,"value":0.045,"cost":{"grain":2995000,"timber":2995000,"herbs":8877000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":206,"level":3},{"kind":"tech","techId":207,"level":3}]},{"level":4,"might":19320,"value":0.06,"cost":{"grain":5184000,"timber":5184000,"herbs":15339000,"scrolls":520},"upgradeTimeSeconds":163000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":206,"level":4},{"kind":"tech","techId":207,"level":4}]},{"level":5,"might":25420,"value":0.075,"cost":{"grain":5184000,"timber":5184000,"herbs":15339000,"scrolls":520},"upgradeTimeSeconds":163000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":206,"level":5},{"kind":"tech","techId":207,"level":5}]},{"level":6,"might":32110,"value":0.09,"cost":{"grain":6146000,"timber":6146000,"herbs":18527000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":206,"level":6},{"kind":"tech","techId":207,"level":6}]},{"level":7,"might":38820,"value":0.105,"cost":{"grain":6146000,"timber":6146000,"herbs":18527000,"scrolls":640},"upgradeTimeSeconds":247000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":206,"level":7},{"kind":"tech","techId":207,"level":7}]},{"level":8,"might":47710,"value":0.12,"cost":{"grain":11177000,"timber":11177000,"herbs":33991000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":206,"level":8},{"kind":"tech","techId":207,"level":8}]},{"level":9,"might":56610,"value":0.135,"cost":{"grain":11177000,"timber":11177000,"herbs":33991000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":206,"level":9},{"kind":"tech","techId":207,"level":9}]},{"level":10,"might":67110,"value":0.15,"cost":{"grain":15551000,"timber":15551000,"herbs":46980000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":206,"level":10},{"kind":"tech","techId":207,"level":10}]}],"name":"생존 기술"},{"techId":209,"position":{"row":4,"column":1},"parents":[{"row":3,"column":2}],"frame":"plain","icon":88,"rate":true,"levels":[{"level":1,"might":4610,"value":0.015,"cost":{"grain":2909000,"timber":2909000,"herbs":8940000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":208,"level":1}]},{"level":2,"might":9210,"value":0.03,"cost":{"grain":2909000,"timber":2909000,"herbs":8940000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":208,"level":2}]},{"level":3,"might":15320,"value":0.045,"cost":{"grain":5193000,"timber":5193000,"herbs":15422000,"scrolls":520},"upgradeTimeSeconds":162000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":208,"level":3}]},{"level":4,"might":21430,"value":0.06,"cost":{"grain":5193000,"timber":5193000,"herbs":15422000,"scrolls":520},"upgradeTimeSeconds":163000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":208,"level":4}]},{"level":5,"might":28110,"value":0.075,"cost":{"grain":6354000,"timber":6354000,"herbs":18435000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":208,"level":5}]},{"level":6,"might":34820,"value":0.09,"cost":{"grain":6354000,"timber":6354000,"herbs":18435000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":208,"level":6}]},{"level":7,"might":43720,"value":0.105,"cost":{"grain":11024000,"timber":11024000,"herbs":33493000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":208,"level":7}]},{"level":8,"might":52610,"value":0.12,"cost":{"grain":11024000,"timber":11024000,"herbs":33493000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":208,"level":8}]},{"level":9,"might":63120,"value":0.135,"cost":{"grain":15753000,"timber":15753000,"herbs":47649000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":208,"level":9}]},{"level":10,"might":73620,"value":0.15,"cost":{"grain":15753000,"timber":15753000,"herbs":47649000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":208,"level":10}]}],"name":"방어 훈련 7"},{"techId":210,"position":{"row":4,"column":2},"parents":[{"row":3,"column":2}],"frame":"plain","icon":87,"rate":true,"levels":[{"level":1,"might":4620,"value":0.015,"cost":{"grain":2975000,"timber":2975000,"herbs":8948000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":208,"level":1}]},{"level":2,"might":9220,"value":0.03,"cost":{"grain":2975000,"timber":2975000,"herbs":8948000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":208,"level":2}]},{"level":3,"might":15310,"value":0.045,"cost":{"grain":5253000,"timber":5253000,"herbs":15676000,"scrolls":520},"upgradeTimeSeconds":162000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":208,"level":3}]},{"level":4,"might":21420,"value":0.06,"cost":{"grain":5253000,"timber":5253000,"herbs":15676000,"scrolls":520},"upgradeTimeSeconds":163000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":208,"level":4}]},{"level":5,"might":28120,"value":0.075,"cost":{"grain":6296000,"timber":6296000,"herbs":18921000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":208,"level":5}]},{"level":6,"might":34820,"value":0.09,"cost":{"grain":6296000,"timber":6296000,"herbs":18921000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":208,"level":6}]},{"level":7,"might":43710,"value":0.105,"cost":{"grain":11383000,"timber":11383000,"herbs":34048000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":208,"level":7}]},{"level":8,"might":52620,"value":0.12,"cost":{"grain":11383000,"timber":11383000,"herbs":34048000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":208,"level":8}]},{"level":9,"might":63120,"value":0.135,"cost":{"grain":15573000,"timber":15573000,"herbs":47333000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":208,"level":9}]},{"level":10,"might":73610,"value":0.15,"cost":{"grain":15573000,"timber":15573000,"herbs":47333000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":208,"level":10}]}],"name":"공격 훈련 7"},{"techId":211,"position":{"row":4,"column":3},"parents":[{"row":3,"column":2}],"frame":"plain","icon":86,"rate":true,"levels":[{"level":1,"might":4620,"value":0.015,"cost":{"grain":2968000,"timber":2968000,"herbs":8739000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":208,"level":1}]},{"level":2,"might":9210,"value":0.03,"cost":{"grain":2968000,"timber":2968000,"herbs":8739000,"scrolls":400},"upgradeTimeSeconds":101000,"requires":[{"kind":"researchLab","level":18},{"kind":"tech","techId":208,"level":2}]},{"level":3,"might":15320,"value":0.045,"cost":{"grain":5178000,"timber":5178000,"herbs":15455000,"scrolls":520},"upgradeTimeSeconds":162000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":208,"level":3}]},{"level":4,"might":21410,"value":0.06,"cost":{"grain":5178000,"timber":5178000,"herbs":15455000,"scrolls":520},"upgradeTimeSeconds":163000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":208,"level":4}]},{"level":5,"might":28110,"value":0.075,"cost":{"grain":6135000,"timber":6135000,"herbs":18841000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":208,"level":5}]},{"level":6,"might":34820,"value":0.09,"cost":{"grain":6135000,"timber":6135000,"herbs":18841000,"scrolls":640},"upgradeTimeSeconds":245000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":208,"level":6}]},{"level":7,"might":43710,"value":0.105,"cost":{"grain":11075000,"timber":11075000,"herbs":34243000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":208,"level":7}]},{"level":8,"might":52630,"value":0.12,"cost":{"grain":11075000,"timber":11075000,"herbs":34243000,"scrolls":800},"upgradeTimeSeconds":346000,"requires":[{"kind":"researchLab","level":21},{"kind":"tech","techId":208,"level":8}]},{"level":9,"might":63120,"value":0.135,"cost":{"grain":16009000,"timber":16009000,"herbs":46494000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":208,"level":9}]},{"level":10,"might":73620,"value":0.15,"cost":{"grain":16009000,"timber":16009000,"herbs":46494000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":208,"level":10}]}],"name":"생존 훈련 7"},{"techId":212,"position":{"row":5,"column":2},"parents":[{"row":4,"column":1},{"row":4,"column":2},{"row":4,"column":3}],"frame":"plain","icon":90,"rate":true,"levels":[{"level":1,"might":6110,"value":0.01,"cost":{"grain":5289000,"timber":5289000,"herbs":15606000,"scrolls":520},"upgradeTimeSeconds":162000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":209,"level":4},{"kind":"tech","techId":210,"level":4},{"kind":"tech","techId":211,"level":4}]},{"level":2,"might":12820,"value":0.02,"cost":{"grain":6283000,"timber":6283000,"herbs":18981000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20}]},{"level":3,"might":19520,"value":0.03,"cost":{"grain":6283000,"timber":6283000,"herbs":18981000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20}]},{"level":4,"might":28410,"value":0.04,"cost":{"grain":11111000,"timber":11111000,"herbs":33230000,"scrolls":800},"upgradeTimeSeconds":343000,"requires":[{"kind":"researchLab","level":21}]},{"level":5,"might":37310,"value":0.05,"cost":{"grain":11111000,"timber":11111000,"herbs":33230000,"scrolls":800},"upgradeTimeSeconds":343000,"requires":[{"kind":"researchLab","level":21}]},{"level":6,"might":47810,"value":0.06,"cost":{"grain":15650000,"timber":15650000,"herbs":46263000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":7,"might":58310,"value":0.07,"cost":{"grain":15650000,"timber":15650000,"herbs":46263000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22}]},{"level":8,"might":70310,"value":0.08,"cost":{"grain":20109000,"timber":20109000,"herbs":62329000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":9,"might":82310,"value":0.09,"cost":{"grain":20109000,"timber":20109000,"herbs":62329000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":10,"might":95720,"value":0.1,"cost":{"grain":25580000,"timber":25580000,"herbs":77421000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]}],"name":"전문 특성 1"},{"techId":213,"position":{"row":6,"column":2},"parents":[{"row":5,"column":2}],"frame":"plain","icon":91,"rate":true,"levels":[{"level":1,"might":6110,"value":0.01,"cost":{"grain":5233000,"timber":5233000,"herbs":15466000,"scrolls":520},"upgradeTimeSeconds":162000,"requires":[{"kind":"researchLab","level":19},{"kind":"tech","techId":212,"level":1}]},{"level":2,"might":12810,"value":0.02,"cost":{"grain":6191000,"timber":6191000,"herbs":18891000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20}]},{"level":3,"might":19520,"value":0.03,"cost":{"grain":6191000,"timber":6191000,"herbs":18891000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20}]},{"level":4,"might":28420,"value":0.04,"cost":{"grain":11441000,"timber":11441000,"herbs":34048000,"scrolls":800},"upgradeTimeSeconds":343000,"requires":[{"kind":"researchLab","level":21}]},{"level":5,"might":37320,"value":0.05,"cost":{"grain":11441000,"timber":11441000,"herbs":34048000,"scrolls":800},"upgradeTimeSeconds":343000,"requires":[{"kind":"researchLab","level":21}]},{"level":6,"might":47810,"value":0.06,"cost":{"grain":15753000,"timber":15753000,"herbs":47413000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":7,"might":58330,"value":0.07,"cost":{"grain":15753000,"timber":15753000,"herbs":47413000,"scrolls":960},"upgradeTimeSeconds":485000,"requires":[{"kind":"researchLab","level":22}]},{"level":8,"might":70320,"value":0.08,"cost":{"grain":20017000,"timber":20017000,"herbs":61398000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":9,"might":82320,"value":0.09,"cost":{"grain":20017000,"timber":20017000,"herbs":61398000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":10,"might":95710,"value":0.1,"cost":{"grain":25935000,"timber":25935000,"herbs":76617000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]}],"name":"훈련장 확장 1"},{"techId":214,"position":{"row":7,"column":1},"parents":[{"row":6,"column":2}],"frame":"plain","icon":86,"rate":false,"levels":[{"level":1,"might":6720,"value":100,"cost":{"grain":6328000,"timber":6328000,"herbs":19024000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":213,"level":1}]},{"level":2,"might":15620,"value":200,"cost":{"grain":11036000,"timber":11036000,"herbs":33530000,"scrolls":800},"upgradeTimeSeconds":340000,"requires":[{"kind":"researchLab","level":21}]},{"level":3,"might":24510,"value":300,"cost":{"grain":11036000,"timber":11036000,"herbs":33530000,"scrolls":800},"upgradeTimeSeconds":340000,"requires":[{"kind":"researchLab","level":21}]},{"level":4,"might":35020,"value":400,"cost":{"grain":15622000,"timber":15622000,"herbs":47743000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":5,"might":45510,"value":500,"cost":{"grain":15622000,"timber":15622000,"herbs":47743000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":6,"might":57510,"value":600,"cost":{"grain":20782000,"timber":20782000,"herbs":62311000,"scrolls":1120},"upgradeTimeSeconds":624000,"requires":[{"kind":"researchLab","level":23}]},{"level":7,"might":69510,"value":700,"cost":{"grain":20782000,"timber":20782000,"herbs":62311000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":8,"might":82920,"value":800,"cost":{"grain":25169000,"timber":25169000,"herbs":76970000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]},{"level":9,"might":96310,"value":900,"cost":{"grain":25169000,"timber":25169000,"herbs":76970000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]},{"level":10,"might":111310,"value":1000,"cost":{"grain":31946000,"timber":31946000,"herbs":94221000,"scrolls":1440},"upgradeTimeSeconds":983000,"requires":[{"kind":"researchLab","level":25}]}],"name":"체력 강화 2"},{"techId":215,"position":{"row":7,"column":2},"parents":[{"row":6,"column":2}],"frame":"plain","icon":87,"rate":false,"levels":[{"level":1,"might":6720,"value":0.24,"cost":{"grain":6270000,"timber":6270000,"herbs":19065000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":213,"level":1}]},{"level":2,"might":15620,"value":0.48,"cost":{"grain":11160000,"timber":11160000,"herbs":34176000,"scrolls":800},"upgradeTimeSeconds":340000,"requires":[{"kind":"researchLab","level":21}]},{"level":3,"might":24520,"value":0.72,"cost":{"grain":11160000,"timber":11160000,"herbs":34176000,"scrolls":800},"upgradeTimeSeconds":340000,"requires":[{"kind":"researchLab","level":21}]},{"level":4,"might":35010,"value":0.96,"cost":{"grain":15589000,"timber":15589000,"herbs":46391000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":5,"might":45510,"value":1.2,"cost":{"grain":15589000,"timber":15589000,"herbs":46391000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":6,"might":57510,"value":1.43,"cost":{"grain":20023000,"timber":20023000,"herbs":61349000,"scrolls":1120},"upgradeTimeSeconds":624000,"requires":[{"kind":"researchLab","level":23}]},{"level":7,"might":69510,"value":1.67,"cost":{"grain":20023000,"timber":20023000,"herbs":61349000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":8,"might":82910,"value":1.91,"cost":{"grain":25937000,"timber":25937000,"herbs":75438000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]},{"level":9,"might":96320,"value":2.15,"cost":{"grain":25937000,"timber":25937000,"herbs":75438000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]},{"level":10,"might":111310,"value":2.39,"cost":{"grain":31570000,"timber":31570000,"herbs":94087000,"scrolls":1440},"upgradeTimeSeconds":983000,"requires":[{"kind":"researchLab","level":25}]}],"name":"공격력 강화 2"},{"techId":216,"position":{"row":7,"column":3},"parents":[{"row":6,"column":2}],"frame":"plain","icon":88,"rate":false,"levels":[{"level":1,"might":6720,"value":0.24,"cost":{"grain":6315000,"timber":6315000,"herbs":18968000,"scrolls":640},"upgradeTimeSeconds":243000,"requires":[{"kind":"researchLab","level":20},{"kind":"tech","techId":213,"level":1}]},{"level":2,"might":15620,"value":0.48,"cost":{"grain":11111000,"timber":11111000,"herbs":33214000,"scrolls":800},"upgradeTimeSeconds":340000,"requires":[{"kind":"researchLab","level":21}]},{"level":3,"might":24520,"value":0.72,"cost":{"grain":11111000,"timber":11111000,"herbs":33214000,"scrolls":800},"upgradeTimeSeconds":340000,"requires":[{"kind":"researchLab","level":21}]},{"level":4,"might":35010,"value":0.96,"cost":{"grain":15809000,"timber":15809000,"herbs":46414000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":5,"might":45520,"value":1.2,"cost":{"grain":15809000,"timber":15809000,"herbs":46414000,"scrolls":960},"upgradeTimeSeconds":480000,"requires":[{"kind":"researchLab","level":22}]},{"level":6,"might":57520,"value":1.43,"cost":{"grain":20141000,"timber":20141000,"herbs":60430000,"scrolls":1120},"upgradeTimeSeconds":624000,"requires":[{"kind":"researchLab","level":23}]},{"level":7,"might":69520,"value":1.67,"cost":{"grain":20141000,"timber":20141000,"herbs":60430000,"scrolls":1120},"upgradeTimeSeconds":630000,"requires":[{"kind":"researchLab","level":23}]},{"level":8,"might":82920,"value":1.91,"cost":{"grain":25493000,"timber":25493000,"herbs":75056000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]},{"level":9,"might":96320,"value":2.15,"cost":{"grain":25493000,"timber":25493000,"herbs":75056000,"scrolls":1280},"upgradeTimeSeconds":820000,"requires":[{"kind":"researchLab","level":24}]},{"level":10,"might":111320,"value":2.39,"cost":{"grain":32434000,"timber":32434000,"herbs":96796000,"scrolls":1440},"upgradeTimeSeconds":983000,"requires":[{"kind":"researchLab","level":25}]}],"name":"방어력 강화 2"},{"techId":217,"position":{"row":8,"column":2},"parents":[{"row":7,"column":1},{"row":7,"column":2},{"row":7,"column":3}],"frame":"gold","icon":92,"rate":true,"levels":[{"level":1,"might":10520,"value":0.025,"cost":{"grain":15990000,"timber":15990000,"herbs":47639000,"scrolls":960},"upgradeTimeSeconds":475000,"requires":[{"kind":"researchLab","level":22},{"kind":"tech","techId":214,"level":1},{"kind":"tech","techId":215,"level":1},{"kind":"tech","techId":216,"level":1}]},{"level":2,"might":22520,"value":0.05,"cost":{"grain":20703000,"timber":20703000,"herbs":61012000,"scrolls":1120},"upgradeTimeSeconds":618000,"requires":[{"kind":"researchLab","level":23},{"kind":"tech","techId":214,"level":2},{"kind":"tech","techId":215,"level":2},{"kind":"tech","techId":216,"level":2}]},{"level":3,"might":34520,"value":0.075,"cost":{"grain":20703000,"timber":20703000,"herbs":61012000,"scrolls":1120},"upgradeTimeSeconds":618000,"requires":[{"kind":"researchLab","level":23},{"kind":"tech","techId":214,"level":3},{"kind":"tech","techId":215,"level":3},{"kind":"tech","techId":216,"level":3}]},{"level":4,"might":47910,"value":0.1,"cost":{"grain":25218000,"timber":25218000,"herbs":75056000,"scrolls":1280},"upgradeTimeSeconds":811000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":214,"level":4},{"kind":"tech","techId":215,"level":4},{"kind":"tech","techId":216,"level":4}]},{"level":5,"might":61310,"value":0.125,"cost":{"grain":25218000,"timber":25218000,"herbs":75056000,"scrolls":1280},"upgradeTimeSeconds":811000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":214,"level":5},{"kind":"tech","techId":215,"level":5},{"kind":"tech","techId":216,"level":5}]},{"level":6,"might":76310,"value":0.15,"cost":{"grain":31787000,"timber":31787000,"herbs":95217000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":214,"level":6},{"kind":"tech","techId":215,"level":6},{"kind":"tech","techId":216,"level":6}]},{"level":7,"might":91320,"value":0.175,"cost":{"grain":31787000,"timber":31787000,"herbs":95217000,"scrolls":1440},"upgradeTimeSeconds":983000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":214,"level":7},{"kind":"tech","techId":215,"level":7},{"kind":"tech","techId":216,"level":7}]},{"level":8,"might":110810,"value":0.2,"cost":{"grain":53533000,"timber":53533000,"herbs":164813000,"scrolls":1600},"upgradeTimeSeconds":1180000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":214,"level":8},{"kind":"tech","techId":215,"level":8},{"kind":"tech","techId":216,"level":8}]},{"level":9,"might":130330,"value":0.225,"cost":{"grain":53533000,"timber":53533000,"herbs":164813000,"scrolls":1600},"upgradeTimeSeconds":1180000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":214,"level":9},{"kind":"tech","techId":215,"level":9},{"kind":"tech","techId":216,"level":9}]},{"level":10,"might":153410,"value":0.25,"cost":{"grain":74681000,"timber":74681000,"herbs":225454000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":214,"level":10},{"kind":"tech","techId":215,"level":10},{"kind":"tech","techId":216,"level":10}]}],"name":"사기"},{"techId":218,"position":{"row":9,"column":1},"parents":[{"row":8,"column":2}],"frame":"plain","icon":88,"rate":true,"levels":[{"level":1,"might":12010,"value":0.015,"cost":{"grain":20143000,"timber":20143000,"herbs":60614000,"scrolls":1120},"upgradeTimeSeconds":618000,"requires":[{"kind":"researchLab","level":23},{"kind":"tech","techId":217,"level":1}]},{"level":2,"might":25430,"value":0.03,"cost":{"grain":25136000,"timber":25136000,"herbs":77613000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":217,"level":2}]},{"level":3,"might":38810,"value":0.045,"cost":{"grain":25136000,"timber":25136000,"herbs":77613000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":217,"level":3}]},{"level":4,"might":53810,"value":0.06,"cost":{"grain":32032000,"timber":32032000,"herbs":94432000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":217,"level":4}]},{"level":5,"might":68810,"value":0.075,"cost":{"grain":32032000,"timber":32032000,"herbs":94432000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":217,"level":5}]},{"level":6,"might":88310,"value":0.09,"cost":{"grain":54564000,"timber":54564000,"herbs":163528000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":217,"level":6}]},{"level":7,"might":107810,"value":0.105,"cost":{"grain":54564000,"timber":54564000,"herbs":163528000,"scrolls":1600},"upgradeTimeSeconds":1180000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":217,"level":7}]},{"level":8,"might":130920,"value":0.12,"cost":{"grain":76176000,"timber":76176000,"herbs":228142000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":217,"level":8}]},{"level":9,"might":154020,"value":0.135,"cost":{"grain":77368000,"timber":77368000,"herbs":227049000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":217,"level":9}]},{"level":10,"might":180320,"value":0.15,"cost":{"grain":100559000,"timber":100559000,"herbs":291344000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":217,"level":10}]}],"name":"방어 훈련 8"},{"techId":219,"position":{"row":9,"column":2},"parents":[{"row":8,"column":2}],"frame":"plain","icon":87,"rate":true,"levels":[{"level":1,"might":12020,"value":0.015,"cost":{"grain":20064000,"timber":20064000,"herbs":61331000,"scrolls":1120},"upgradeTimeSeconds":618000,"requires":[{"kind":"researchLab","level":23},{"kind":"tech","techId":217,"level":1}]},{"level":2,"might":25420,"value":0.03,"cost":{"grain":25797000,"timber":25797000,"herbs":76947000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":217,"level":2}]},{"level":3,"might":38810,"value":0.045,"cost":{"grain":25797000,"timber":25797000,"herbs":76947000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":217,"level":3}]},{"level":4,"might":53810,"value":0.06,"cost":{"grain":31965000,"timber":31965000,"herbs":95073000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":217,"level":4}]},{"level":5,"might":68820,"value":0.075,"cost":{"grain":31965000,"timber":31965000,"herbs":95073000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":217,"level":5}]},{"level":6,"might":88310,"value":0.09,"cost":{"grain":53582000,"timber":53582000,"herbs":161722000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":217,"level":6}]},{"level":7,"might":107820,"value":0.105,"cost":{"grain":53582000,"timber":53582000,"herbs":161722000,"scrolls":1600},"upgradeTimeSeconds":1180000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":217,"level":7}]},{"level":8,"might":130920,"value":0.12,"cost":{"grain":75615000,"timber":75615000,"herbs":230397000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":217,"level":8}]},{"level":9,"might":154010,"value":0.135,"cost":{"grain":75615000,"timber":75615000,"herbs":230397000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":217,"level":9}]},{"level":10,"might":180320,"value":0.15,"cost":{"grain":99937000,"timber":99937000,"herbs":296318000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":217,"level":10}]}],"name":"공격 훈련 8"},{"techId":220,"position":{"row":9,"column":3},"parents":[{"row":8,"column":2}],"frame":"plain","icon":86,"rate":true,"levels":[{"level":1,"might":12010,"value":0.015,"cost":{"grain":20680000,"timber":20680000,"herbs":60167000,"scrolls":1120},"upgradeTimeSeconds":618000,"requires":[{"kind":"researchLab","level":23},{"kind":"tech","techId":217,"level":1}]},{"level":2,"might":25420,"value":0.03,"cost":{"grain":25539000,"timber":25539000,"herbs":76066000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":217,"level":2}]},{"level":3,"might":38820,"value":0.045,"cost":{"grain":25539000,"timber":25539000,"herbs":76066000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":217,"level":3}]},{"level":4,"might":53820,"value":0.06,"cost":{"grain":32246000,"timber":32246000,"herbs":94968000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":217,"level":4}]},{"level":5,"might":68810,"value":0.075,"cost":{"grain":32246000,"timber":32246000,"herbs":94968000,"scrolls":1440},"upgradeTimeSeconds":974000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":217,"level":5}]},{"level":6,"might":88320,"value":0.09,"cost":{"grain":54385000,"timber":54385000,"herbs":162763000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":217,"level":6}]},{"level":7,"might":107820,"value":0.105,"cost":{"grain":54385000,"timber":54385000,"herbs":162763000,"scrolls":1600},"upgradeTimeSeconds":1180000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":217,"level":7}]},{"level":8,"might":130910,"value":0.12,"cost":{"grain":74787000,"timber":74787000,"herbs":227755000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":217,"level":8}]},{"level":9,"might":154020,"value":0.135,"cost":{"grain":74787000,"timber":74787000,"herbs":227755000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":217,"level":9}]},{"level":10,"might":180320,"value":0.15,"cost":{"grain":98329000,"timber":98329000,"herbs":295963000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":217,"level":10}]}],"name":"생존 훈련 8"},{"techId":221,"position":{"row":10,"column":1},"parents":[{"row":9,"column":1},{"row":9,"column":2},{"row":9,"column":3}],"frame":"plain","icon":93,"rate":true,"levels":[{"level":1,"might":13410,"value":0.01,"cost":{"grain":25302000,"timber":25302000,"herbs":75140000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":218,"level":3},{"kind":"tech","techId":219,"level":3},{"kind":"tech","techId":220,"level":3}]},{"level":2,"might":28420,"value":0.02,"cost":{"grain":32080000,"timber":32080000,"herbs":95389000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25}]},{"level":3,"might":43410,"value":0.03,"cost":{"grain":32080000,"timber":32080000,"herbs":95389000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25}]},{"level":4,"might":62920,"value":0.04,"cost":{"grain":54141000,"timber":54141000,"herbs":162585000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26}]},{"level":5,"might":82410,"value":0.05,"cost":{"grain":54141000,"timber":54141000,"herbs":162585000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26}]},{"level":6,"might":105530,"value":0.06,"cost":{"grain":75015000,"timber":75015000,"herbs":223404000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27}]},{"level":7,"might":128610,"value":0.07,"cost":{"grain":75015000,"timber":75015000,"herbs":223404000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27}]},{"level":8,"might":154920,"value":0.08,"cost":{"grain":96749000,"timber":96749000,"herbs":301974000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28}]},{"level":9,"might":181220,"value":0.09,"cost":{"grain":96749000,"timber":96749000,"herbs":301974000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28}]},{"level":10,"might":212430,"value":0.1,"cost":{"grain":139719000,"timber":139719000,"herbs":407135000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29}]}],"name":"신속 응급 처치 1"},{"techId":222,"position":{"row":10,"column":3},"parents":[{"row":9,"column":1},{"row":9,"column":2},{"row":9,"column":3}],"frame":"plain","icon":94,"rate":true,"levels":[{"level":1,"might":13420,"value":0.01,"cost":{"grain":25720000,"timber":25720000,"herbs":77192000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":218,"level":3},{"kind":"tech","techId":219,"level":3},{"kind":"tech","techId":220,"level":3}]},{"level":2,"might":28410,"value":0.02,"cost":{"grain":32214000,"timber":32214000,"herbs":96978000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25}]},{"level":3,"might":43420,"value":0.03,"cost":{"grain":32214000,"timber":32214000,"herbs":96978000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25}]},{"level":4,"might":62910,"value":0.04,"cost":{"grain":53360000,"timber":53360000,"herbs":160111000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26}]},{"level":5,"might":82420,"value":0.05,"cost":{"grain":53360000,"timber":53360000,"herbs":160111000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26}]},{"level":6,"might":105520,"value":0.06,"cost":{"grain":76776000,"timber":76776000,"herbs":225135000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27}]},{"level":7,"might":128620,"value":0.07,"cost":{"grain":76776000,"timber":76776000,"herbs":225135000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27}]},{"level":8,"might":154910,"value":0.08,"cost":{"grain":99069000,"timber":99069000,"herbs":295667000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28}]},{"level":9,"might":181220,"value":0.09,"cost":{"grain":99069000,"timber":99069000,"herbs":295667000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28}]},{"level":10,"might":212410,"value":0.1,"cost":{"grain":137992000,"timber":137992000,"herbs":420940000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29}]}],"name":"병원 확장 1"},{"techId":223,"position":{"row":11,"column":2},"parents":[{"row":10,"column":1},{"row":10,"column":3}],"frame":"glow","icon":89,"rate":true,"levels":[{"level":1,"might":13420,"value":0.015,"cost":{"grain":25488000,"timber":25488000,"herbs":75033000,"scrolls":1280},"upgradeTimeSeconds":803000,"requires":[{"kind":"researchLab","level":24},{"kind":"tech","techId":221,"level":1},{"kind":"tech","techId":222,"level":1}]},{"level":2,"might":28410,"value":0.03,"cost":{"grain":31953000,"timber":31953000,"herbs":95370000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25}]},{"level":3,"might":43420,"value":0.045,"cost":{"grain":31953000,"timber":31953000,"herbs":95370000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25}]},{"level":4,"might":62910,"value":0.06,"cost":{"grain":54748000,"timber":54748000,"herbs":162650000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26}]},{"level":5,"might":82410,"value":0.075,"cost":{"grain":54748000,"timber":54748000,"herbs":162650000,"scrolls":1600},"upgradeTimeSeconds":1170000,"requires":[{"kind":"researchLab","level":26}]},{"level":6,"might":105510,"value":0.09,"cost":{"grain":75546000,"timber":75546000,"herbs":228324000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27}]},{"level":7,"might":128620,"value":0.105,"cost":{"grain":75546000,"timber":75546000,"herbs":228324000,"scrolls":1800},"upgradeTimeSeconds":1420000,"requires":[{"kind":"researchLab","level":27}]},{"level":8,"might":154910,"value":0.12,"cost":{"grain":100086000,"timber":100086000,"herbs":300701000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28}]},{"level":9,"might":181220,"value":0.135,"cost":{"grain":100086000,"timber":100086000,"herbs":300701000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28}]},{"level":10,"might":212420,"value":0.15,"cost":{"grain":136776000,"timber":136776000,"herbs":410990000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29}]}],"name":"생존 기술"},{"techId":224,"position":{"row":12,"column":1},"parents":[{"row":11,"column":2}],"frame":"plain","icon":86,"rate":false,"levels":[{"level":1,"might":15020,"value":130,"cost":{"grain":31388000,"timber":31388000,"herbs":94595000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":223,"level":1}]},{"level":2,"might":34510,"value":260,"cost":{"grain":53859000,"timber":53859000,"herbs":160421000,"scrolls":1600},"upgradeTimeSeconds":1160000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":223,"level":2}]},{"level":3,"might":54010,"value":390,"cost":{"grain":53859000,"timber":53859000,"herbs":160421000,"scrolls":1600},"upgradeTimeSeconds":1160000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":223,"level":3}]},{"level":4,"might":77120,"value":520,"cost":{"grain":76898000,"timber":76898000,"herbs":231741000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":223,"level":4}]},{"level":5,"might":100220,"value":650,"cost":{"grain":76898000,"timber":76898000,"herbs":231741000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":223,"level":5}]},{"level":6,"might":126520,"value":780,"cost":{"grain":98269000,"timber":98269000,"herbs":293150000,"scrolls":2000},"upgradeTimeSeconds":1680000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":223,"level":6}]},{"level":7,"might":152810,"value":910,"cost":{"grain":98269000,"timber":98269000,"herbs":293150000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":223,"level":7}]},{"level":8,"might":184020,"value":1040,"cost":{"grain":139650000,"timber":139650000,"herbs":410824000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29},{"kind":"tech","techId":223,"level":8}]},{"level":9,"might":215210,"value":1170,"cost":{"grain":139650000,"timber":139650000,"herbs":410824000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29},{"kind":"tech","techId":223,"level":9}]},{"level":10,"might":252020,"value":1300,"cost":{"grain":193614000,"timber":193614000,"herbs":573297000,"scrolls":2400},"upgradeTimeSeconds":2450000,"requires":[{"kind":"researchLab","level":30},{"kind":"tech","techId":223,"level":10}]}],"name":"체력 강화 3"},{"techId":225,"position":{"row":12,"column":3},"parents":[{"row":11,"column":2}],"frame":"plain","icon":87,"rate":false,"levels":[{"level":1,"might":15010,"value":0.32,"cost":{"grain":32396000,"timber":32396000,"herbs":94059000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":223,"level":1}]},{"level":2,"might":34520,"value":0.64,"cost":{"grain":54010000,"timber":54010000,"herbs":164098000,"scrolls":1600},"upgradeTimeSeconds":1160000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":223,"level":2}]},{"level":3,"might":54020,"value":0.96,"cost":{"grain":54010000,"timber":54010000,"herbs":164098000,"scrolls":1600},"upgradeTimeSeconds":1160000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":223,"level":3}]},{"level":4,"might":77120,"value":1.27,"cost":{"grain":76017000,"timber":76017000,"herbs":223655000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":223,"level":4}]},{"level":5,"might":100220,"value":1.59,"cost":{"grain":76017000,"timber":76017000,"herbs":223655000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":223,"level":5}]},{"level":6,"might":126520,"value":1.91,"cost":{"grain":96809000,"timber":96809000,"herbs":290899000,"scrolls":2000},"upgradeTimeSeconds":1680000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":223,"level":6}]},{"level":7,"might":152810,"value":2.23,"cost":{"grain":96809000,"timber":96809000,"herbs":290899000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":223,"level":7}]},{"level":8,"might":184010,"value":2.54,"cost":{"grain":137453000,"timber":137453000,"herbs":414224000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29},{"kind":"tech","techId":223,"level":8}]},{"level":9,"might":215220,"value":2.86,"cost":{"grain":137453000,"timber":137453000,"herbs":414224000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29},{"kind":"tech","techId":223,"level":9}]},{"level":10,"might":252010,"value":3.18,"cost":{"grain":191525000,"timber":191525000,"herbs":572949000,"scrolls":2400},"upgradeTimeSeconds":2450000,"requires":[{"kind":"researchLab","level":30},{"kind":"tech","techId":223,"level":10}]}],"name":"공격력 강화 3"},{"techId":226,"position":{"row":13,"column":2},"parents":[{"row":12,"column":1},{"row":12,"column":3}],"frame":"plain","icon":88,"rate":false,"levels":[{"level":1,"might":15020,"value":0.32,"cost":{"grain":31736000,"timber":31736000,"herbs":97332000,"scrolls":1440},"upgradeTimeSeconds":964000,"requires":[{"kind":"researchLab","level":25},{"kind":"tech","techId":224,"level":1},{"kind":"tech","techId":225,"level":1}]},{"level":2,"might":34510,"value":0.64,"cost":{"grain":54640000,"timber":54640000,"herbs":164407000,"scrolls":1600},"upgradeTimeSeconds":1160000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":224,"level":2},{"kind":"tech","techId":225,"level":2}]},{"level":3,"might":54010,"value":0.96,"cost":{"grain":54640000,"timber":54640000,"herbs":164407000,"scrolls":1600},"upgradeTimeSeconds":1160000,"requires":[{"kind":"researchLab","level":26},{"kind":"tech","techId":224,"level":3},{"kind":"tech","techId":225,"level":3}]},{"level":4,"might":77110,"value":1.27,"cost":{"grain":77072000,"timber":77072000,"herbs":226069000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":224,"level":4},{"kind":"tech","techId":225,"level":4}]},{"level":5,"might":100210,"value":1.59,"cost":{"grain":77072000,"timber":77072000,"herbs":226069000,"scrolls":1800},"upgradeTimeSeconds":1400000,"requires":[{"kind":"researchLab","level":27},{"kind":"tech","techId":224,"level":5},{"kind":"tech","techId":225,"level":5}]},{"level":6,"might":126520,"value":1.91,"cost":{"grain":96779000,"timber":96779000,"herbs":297917000,"scrolls":2000},"upgradeTimeSeconds":1680000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":224,"level":6},{"kind":"tech","techId":225,"level":6}]},{"level":7,"might":152810,"value":2.23,"cost":{"grain":96779000,"timber":96779000,"herbs":297917000,"scrolls":2000},"upgradeTimeSeconds":1700000,"requires":[{"kind":"researchLab","level":28},{"kind":"tech","techId":224,"level":7},{"kind":"tech","techId":225,"level":7}]},{"level":8,"might":184010,"value":2.54,"cost":{"grain":136499000,"timber":136499000,"herbs":415716000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29},{"kind":"tech","techId":224,"level":8},{"kind":"tech","techId":225,"level":8}]},{"level":9,"might":215220,"value":2.86,"cost":{"grain":136499000,"timber":136499000,"herbs":415716000,"scrolls":2200},"upgradeTimeSeconds":2040000,"requires":[{"kind":"researchLab","level":29},{"kind":"tech","techId":224,"level":9},{"kind":"tech","techId":225,"level":9}]},{"level":10,"might":252020,"value":3.18,"cost":{"grain":194697000,"timber":194697000,"herbs":584440000,"scrolls":2400},"upgradeTimeSeconds":2450000,"requires":[{"kind":"researchLab","level":30},{"kind":"tech","techId":224,"level":10},{"kind":"tech","techId":225,"level":10}]}],"name":"방어력 강화 3"},{"techId":227,"position":{"row":14,"column":2},"parents":[{"row":13,"column":2}],"frame":"gold","icon":95,"rate":false,"levels":[{"level":1,"might":36810,"cost":{"grain":194697000,"timber":194697000,"herbs":584440000,"scrolls":2400},"upgradeTimeSeconds":2400000,"requires":[{"kind":"researchLab","level":30},{"kind":"tech","techId":226,"level":10}]}],"name":"Lv.10 병사"}]};
+const nodes = TREE.nodes;
+const byId = new Map(nodes.map(n=>[n.techId,n]));
+const TOTAL_LEVELS = nodes.reduce((a,n)=>a+n.levels.length,0);
+const icons = {86: "https://thelaphub.com/assets/86-OB0WL2ar.webp", 87: "https://thelaphub.com/assets/87-DSncwTz4.webp", 88: "https://thelaphub.com/assets/88-CL6HBJn1.webp", 89: "https://thelaphub.com/assets/89-BOvCcLtC.webp", 90: "https://thelaphub.com/assets/90-DHqfU35z.webp", 91: "https://thelaphub.com/assets/91-DjXAOci2.webp", 92: "https://thelaphub.com/assets/92-Dtd_MwsF.webp", 93: "https://thelaphub.com/assets/93-Tib83WXc.webp", 94: "https://thelaphub.com/assets/94-6DBXdIuh.webp", 95: "https://thelaphub.com/assets/95-BHyf3aUB.webp"};
+
+function buildTarget(goalId=227, goalLevel=1){
+  const target = new Map([[goalId,goalLevel]]);
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(const [id,lv] of [...target]){
+      const n=byId.get(id); if(!n) continue;
+      for(const L of n.levels.slice(0,lv)){
+        for(const r of L.requires||[]){
+          if(r.kind==="tech" && byId.has(r.techId)){
+            if((target.get(r.techId)||0)<r.level){target.set(r.techId,r.level);changed=true;}
+          }
+        }
+      }
+    }
+  }
+  return target;
+}
+const TARGET = new Map([[205,3],[206,3],[207,3],[208,3],[209,4],[210,4],[211,4],[212,1],[213,1],[214,3],[215,3],[216,3],[217,3],[218,3],[219,3],[220,3],[221,1],[222,1],[223,10],[224,10],[225,10],[226,10],[227,1]]);
+const MIN_TOTAL=[...TARGET.values()].reduce((a,b)=>a+b,0);
+
+let state={
+  levels:Object.fromEntries(nodes.map(n=>[n.techId,0])),
+  grain:"",timber:"",herbs:"",scrolls:"",discount:"",lab:"30"
+};
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const num=x=>{const v=parseFloat(String(x||"").replace(/,/g,""));return Number.isFinite(v)?v:0};
+const fmtInt=x=>Math.round(x).toLocaleString("ko-KR");
+const fmtM=x=>{
+  const m=x/1e6;
+  if(m>=1000){
+    const b=m/1000;
+    return b.toLocaleString("ko-KR",{maximumFractionDigits:3})+"B";
+  }
+  return m.toLocaleString("ko-KR",{maximumFractionDigits:3})+"M";
+};
+function discounted(v){
+  const d=clamp(num(state.discount),0,100);
+  return Math.round(v*(1-d/100));
+}
+function save(){localStorage.setItem("eliteT10CalcV1",JSON.stringify(state))}
+function readFields(){
+  ["grain","timber","herbs","scrolls","discount","lab"].forEach(k=>state[k]=$(k).value);
+  save();
+}
+function current(id){return Number(state.levels[id]||0)}
+function setLevel(id,v){
+  const n=byId.get(Number(id)); if(!n)return;
+  state.levels[id]=clamp(parseInt(v)||0,0,n.levels.length);
+  save(); renderTree(); refreshBasic();
+}
+function step(id,d){setLevel(id,current(id)+d)}
+
+function renderTree(){
+  const host=$("tree"); host.innerHTML="";
+  const maxRow=Math.max(...nodes.map(n=>n.position.row));
+  for(let row=1;row<=maxRow;row++){
+    const rd=document.createElement("div");rd.className="tree-row";
+    for(let col=1;col<=3;col++){
+      const slot=document.createElement("div");slot.className="slot";
+      const n=nodes.find(x=>x.position.row===row&&x.position.column===col);
+      if(n){
+        const lv=current(n.techId), target=TARGET.get(n.techId)||0;
+        const box=document.createElement("div");box.className="nodebox";
+        const frame=n.frame==="gold"?"gold":n.frame==="glow"?"glow":"";
+        box.innerHTML=`
+          <button class="hex ${frame} ${lv>=target&&target>0?"done":""}" data-plus="${n.techId}">
+            <span class="ico">${icons[n.icon]?`<img src="${icons[n.icon]}" alt="">`:""}</span>
+            <span class="lv">${lv}/${n.levels.length}</span>
+          </button>
+          <div class="nm">${n.name}</div>
+          <div class="ctrl">
+            <button class="minus" data-minus="${n.techId}">↶</button>
+            <input class="lvin" data-input="${n.techId}" value="${lv}" inputmode="numeric">
+            <button class="node-reset" data-reset="${n.techId}">R</button>
+          </div>
+          <div class="target">${target?`최소 <strong>${target}</strong>`:"선택"}</div>`;
+        slot.appendChild(box);
+      }
+      rd.appendChild(slot);
+    }
+    host.appendChild(rd);
+  }
+  document.querySelectorAll("[data-plus]").forEach(b=>b.onclick=()=>step(Number(b.dataset.plus),1));
+  document.querySelectorAll("[data-minus]").forEach(b=>b.onclick=()=>step(Number(b.dataset.minus),-1));
+  document.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>setLevel(Number(b.dataset.reset),0));
+  document.querySelectorAll("[data-input]").forEach(i=>i.onchange=()=>setLevel(Number(i.dataset.input),i.value));
+}
+function refreshBasic(){
+  $("currentSum").textContent=Object.values(state.levels).reduce((a,b)=>a+Number(b||0),0)+" / "+TOTAL_LEVELS;
+  $("minTreeLevels").textContent=MIN_TOTAL+"단계";
+}
+
+function requirementsMetForLevel(node, level, levels, lab){
+  const L=node.levels[level-1];
+  if(!L)return false;
+  // 연구실 조건만 원본 데이터대로 확인.
+  // 노드 간 최소값은 사용자가 지정한 90단계 TARGET을 기준으로 계산한다.
+  return (L.requires||[]).every(r=>{
+    if(r.kind==="researchLab") return lab>=r.level;
+    return true;
+  });
+}
+
+function remainingBill(levels){
+  let bill={grain:0,timber:0,herbs:0,scrolls:0,steps:0};
+  for(const [id,target] of TARGET){
+    const n=byId.get(id), from=Math.min(levels[id]||0,target);
+    for(let k=from;k<target;k++){
+      const c=n.levels[k].cost;
+      bill.grain+=discounted(c.grain); bill.timber+=discounted(c.timber);
+      bill.herbs+=discounted(c.herbs); bill.scrolls+=c.scrolls; bill.steps++;
+    }
+  }
+  return bill;
+}
+
+function makeMinimumList(){
+  const rows=[...TARGET.entries()].sort((a,b)=>{
+    const na=byId.get(a[0]),nb=byId.get(b[0]);
+    return na.position.row-nb.position.row || na.position.column-nb.position.column;
+  });
+  $("minimumList").innerHTML=rows.map(([id,t],idx)=>{
+    const n=byId.get(id), cur=current(id);
+    return `<div class="step"><div class="ord">${idx+1}</div>
+      <div><div class="who">${n.name}</div><div class="cost">현재 ${cur} / 최소 필요 ${t}</div></div>
+      <div class="after">${Math.max(0,t-cur)}단계</div></div>`;
+  }).join("");
+}
+
+function simulateRoute(strategy){
+  const levels=Object.fromEntries(nodes.map(n=>[n.techId,current(n.techId)]));
+  let left={
+    grain:num(state.grain)*1e6,timber:num(state.timber)*1e6,herbs:num(state.herbs)*1e6,
+    scrolls:num(state.scrolls)
+  };
+  const lab=state.lab===""?30:clamp(parseInt(state.lab)||0,0,99);
+  const steps=[];
+  let guard=0;
+  while(guard++<300){
+    const eligible=[];
+    for(const [id,target] of TARGET){
+      const n=byId.get(id), lv=levels[id]||0;
+      if(lv>=target)continue;
+      const next=lv+1;
+      if(!requirementsMetForLevel(n,next,levels,lab))continue;
+      const c=n.levels[next-1].cost;
+      const dc={grain:discounted(c.grain),timber:discounted(c.timber),herbs:discounted(c.herbs),scrolls:c.scrolls};
+      const can=dc.grain<=left.grain && dc.timber<=left.timber && dc.herbs<=left.herbs && dc.scrolls<=left.scrolls;
+      if(!can)continue;
+      let score=0;
+      if(strategy==="scroll") score=dc.scrolls;
+      else if(strategy==="cheap"){
+        const ratios=[
+          left.grain>0?dc.grain/left.grain:999,
+          left.timber>0?dc.timber/left.timber:999,
+          left.herbs>0?dc.herbs/left.herbs:999,
+          left.scrolls>0?dc.scrolls/left.scrolls:999
+        ];
+        score=ratios.reduce((a,b)=>a+b,0);
+      } else if(strategy==="depth"){
+        score=n.position.row*1000000 + dc.scrolls;
+      } else {
+        const unlockWeight=(14-n.position.row);
+        score=(dc.scrolls+1)/(unlockWeight+1);
+      }
+      eligible.push({id,n,next,dc,score});
+    }
+    if(!eligible.length)break;
+    eligible.sort((a,b)=>a.score-b.score);
+    const pick=eligible[0];
+    levels[pick.id]=pick.next;
+    left.grain-=pick.dc.grain;left.timber-=pick.dc.timber;left.herbs-=pick.dc.herbs;left.scrolls-=pick.dc.scrolls;
+    steps.push({...pick,left:{...left}});
+    if((levels[227]||0)>=1)break;
+  }
+  const progress=[...TARGET.entries()].reduce((a,[id,t])=>a+Math.min(levels[id]||0,t),0);
+  const deepest=Math.max(...[...TARGET.keys()].filter(id=>(levels[id]||0)>0).map(id=>byId.get(id).position.row),0);
+  return {levels,left,steps,progress,deepest,done:(levels[227]||0)>=1};
+}
+function bestRoute(){
+  const routes=["cheap","scroll","depth","unlock"].map(simulateRoute);
+  routes.sort((a,b)=>Number(b.done)-Number(a.done)||b.progress-a.progress||b.deepest-a.deepest||b.left.scrolls-a.left.scrolls);
+  return routes[0];
+}
+
+function calculate(){
+  readFields();
+  const bill=remainingBill(state.levels);
+  $("remainSteps").textContent=bill.steps+"단계";
+  $("needGrain").textContent=fmtM(bill.grain);
+  $("needTimber").textContent=fmtM(bill.timber);
+  $("needHerbs").textContent=fmtM(bill.herbs);
+  $("needScrolls").textContent=fmtInt(bill.scrolls)+"장";
+  const enough=num(state.grain)*1e6>=bill.grain && num(state.timber)*1e6>=bill.timber &&
+               num(state.herbs)*1e6>=bill.herbs && num(state.scrolls)>=bill.scrolls;
+  const lab=state.lab===""?30:parseInt(state.lab)||0;
+  $("canT10").innerHTML=(enough&&lab>=30)?'<span class="ok">가능</span>':'<span class="bad">아직 부족</span>';
+
+  try{
+    const r=bestRoute();
+    const startProgress=MIN_TOTAL-bill.steps;
+    $("routeSummary").innerHTML=
+      `보유량으로 최소트리 필수 연구를 <b>${r.steps.length}단계</b> 더 진행 가능 · `+
+      `최소트리 진행 ${startProgress} → <b>${r.progress}/${MIN_TOTAL}</b>`+
+      (r.done?` · <span class="ok"><b>T10 해금 가능</b></span>`:` · <span class="muted">T10 미도달</span>`);
+
+    $("routeList").innerHTML=r.steps.length?r.steps.map((s,i)=>{
+      const c=s.dc;
+      return `<div class="step"><div class="ord">${i+1}</div>
+        <div><div class="who">${s.n.name} Lv.${s.next}</div>
+        <div class="cost">식량 ${fmtM(c.grain)} · 목재 ${fmtM(c.timber)} · 약초 ${fmtM(c.herbs)} · 스크롤 ${fmtInt(c.scrolls)}</div></div>
+        <div class="after">${s.n.position.row}행</div></div>`;
+    }).join(""):`<div class="notice">현재 보유량으로 추가 진행 가능한 최소트리 연구가 없습니다.</div>`;
+  }catch(e){
+    $("routeSummary").innerHTML=`필요량 계산은 완료되었습니다. 추천 순서 계산 중 오류가 발생했습니다.`;
+    $("routeList").innerHTML="";
+  }
+  makeMinimumList();
+}
+function load(){
+  try{
+    const z=JSON.parse(localStorage.getItem("eliteT10CalcV1"));
+    if(z) state={...state,...z,levels:{...state.levels,...z.levels}};
+  }catch(e){}
+  ["grain","timber","herbs","scrolls","discount","lab"].forEach(k=>$(k).value=state[k]??"");
+  renderTree();refreshBasic();makeMinimumList();
+}
+["grain","timber","herbs","scrolls","discount","lab"].forEach(k=>$(k).oninput=readFields);
+$("calc").onclick=calculate;
+$("zeroAll").onclick=()=>{nodes.forEach(n=>state.levels[n.techId]=0);save();renderTree();refreshBasic();};
+$("fillMin").onclick=()=>{for(const [id,t] of TARGET)state.levels[id]=t;save();renderTree();refreshBasic();calculate();};
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id===b.dataset.tab));
+});
+
+function encodeState(){readFields();return btoa(unescape(encodeURIComponent(JSON.stringify({v:1,state}))));}
+$("exportBtn").onclick=()=>$("code").value=encodeState();
+$("copyBtn").onclick=async()=>{
+  if(!$("code").value)$("code").value=encodeState();
+  try{await navigator.clipboard.writeText($("code").value);alert("저장코드를 복사했어요.");}
+  catch(e){$("code").select();document.execCommand("copy");alert("저장코드를 복사했어요.");}
+};
+$("importBtn").onclick=()=>{
+  try{
+    const z=JSON.parse(decodeURIComponent(escape(atob($("code").value.trim()))));
+    state={...state,...z.state,levels:{...state.levels,...z.state.levels}};save();load();calculate();alert("불러왔어요.");
+  }catch(e){alert("저장코드를 확인해주세요.");}
+};
+$("resetBtn").onclick=()=>{
+  if(confirm("모든 저장값을 초기화할까요?")){localStorage.removeItem("eliteT10CalcV1");location.reload();}
+};
+load();
+</script>
+</body>
+</html>
