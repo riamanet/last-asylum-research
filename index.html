@@ -1,6 +1,7 @@
 <!doctype html>
-<html lang="ko">
+<html translate="no" class="notranslate" lang="ko">
 <head>
+<meta name="google" content="notranslate">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>정예 부대 T10 최소트리 계산기</title>
@@ -607,9 +608,20 @@ summary{
 .unit-select:focus{border-color:#4f819a}
 </style>
 
+
+<style>
+.lang-switch{display:flex;justify-content:flex-end;margin:0 0 12px}
+.lang-select{min-width:170px;height:48px;border:1px solid #2b3d52;background:#162232;color:#dce6ee;border-radius:14px;padding:0 14px;font-size:14px;font-weight:800;outline:none}
+</style>
 </head>
 <body>
 <main class="wrap">
+<div class="lang-switch notranslate">
+<select id="languageSelect" class="lang-select" aria-label="Language" translate="no">
+<option value="ko">🇰🇷 한국어</option>
+<option value="en">English</option>
+</select>
+</div>
 <section class="hero">
   <h1>정예 부대 T10 최소트리 계산기</h1>
   <p>현재 연구 상태를 찍으면 T10까지 남은 최소 연구량을 계산하고, 가진 자원·스크롤로 최소트리를 어디까지 진행할 수 있는지 추천합니다.</p>
@@ -945,10 +957,17 @@ function calculate(){
   try{
     const r=bestRoute();
     const startProgress=MIN_TOTAL-bill.steps;
-    $("routeSummary").innerHTML=
-      `보유량으로 최소트리 필수 연구를 <b>${r.steps.length}단계</b> 더 진행 가능 · `+
-      `최소트리 진행 ${startProgress} → <b>${r.progress}/${MIN_TOTAL}</b>`+
-      (r.done?` · <span class="ok"><b>T10 해금 가능</b></span>`:` · <span class="muted">T10 미도달</span>`);
+    if(typeof uiLanguage!=="undefined" && uiLanguage==="en"){
+      $("routeSummary").innerHTML=
+        `With your current resources, you can complete <b>${r.steps.length} more required step${r.steps.length===1?"":"s"}</b> · `+
+        `Minimum Tree progress: ${startProgress} → <b>${r.progress}/${MIN_TOTAL}</b>`+
+        (r.done?` · <span class="ok"><b>T10 unlock available</b></span>`:` · <span class="muted">T10 not reached</span>`);
+    }else{
+      $("routeSummary").innerHTML=
+        `보유량으로 최소트리 필수 연구를 <b>${r.steps.length}단계</b> 더 진행 가능 · `+
+        `최소트리 진행 ${startProgress} → <b>${r.progress}/${MIN_TOTAL}</b>`+
+        (r.done?` · <span class="ok"><b>T10 해금 가능</b></span>`:` · <span class="muted">T10 미도달</span>`);
+    }
 
     $("routeList").innerHTML=r.steps.length?r.steps.map((s,i)=>{
       const c=s.dc;
@@ -956,7 +975,9 @@ function calculate(){
         <div><div class="who">${s.n.name} Lv.${s.next}</div>
         <div class="cost">식량 ${fmtM(c.grain)} · 목재 ${fmtM(c.timber)} · 약초 ${fmtM(c.herbs)} · 스크롤 ${fmtInt(c.scrolls)}</div></div>
         <div class="after">${s.n.position.row}행</div></div>`;
-    }).join(""):`<div class="notice">현재 보유량으로 추가 진행 가능한 최소트리 연구가 없습니다.</div>`;
+    }).join(""):`<div class="notice">${typeof uiLanguage!=="undefined"&&uiLanguage==="en"
+      ?"No additional Minimum Tree research can be completed with your current resources."
+      :"현재 보유량으로 추가 진행 가능한 최소트리 연구가 없습니다."}</div>`;
   }catch(e){
     $("routeSummary").innerHTML=`필요량 계산은 완료되었습니다. 추천 순서 계산 중 오류가 발생했습니다.`;
     $("routeList").innerHTML="";
@@ -1011,7 +1032,77 @@ $("importBtn").onclick=()=>{
 $("resetBtn").onclick=()=>{
   if(confirm("모든 저장값을 초기화할까요?")){localStorage.removeItem("eliteT10CalcV1");location.reload();}
 };
+
+const EN_DICT={"정예 부대 T10 최소트리 계산기": "Elite Troops T10 Minimum Tree Calculator", "현재 연구 상태를 찍으면 T10까지 남은 최소 연구량을 계산하고, 가진 자원·스크롤로 최소트리를 어디까지 진행할 수 있는지 추천합니다.": "Set your current research levels to calculate the minimum research remaining to T10 and see how far your resources and Research Scrolls can advance the minimum tree.", "현재 연구 상태": "Current Research Status", "육각형 터치 +1 · ↶ 버튼 -1 · 숫자 직접 입력 가능 · 변경 즉시 자동 저장": "Tap a hexagon: +1 · ↶: -1 · Enter a level directly · Changes are saved automatically", "전체 리셋": "Reset All", "T10 최소트리 채우기": "Fill T10 Minimum Tree", "보유 자원 / 설정": "Owned Resources / Settings", "식량·목재·약초는 숫자를 입력한 뒤 M/B 단위를 선택하세요. 빈칸은 0으로 계산합니다. 자원 감소율은 식량·목재·약초에만 적용하고 연구 스크롤에는 적용하지 않습니다.": "Enter Food, Timber, and Herbs, then select M or B. Blank fields count as 0. Resource reduction applies only to Food, Timber, and Herbs, not Research Scrolls.", "식량": "Food", "목재": "Timber", "약초": "Herbs", "연구 스크롤 (장)": "Research Scrolls", "연구 자원 감소 (%)": "Research Resource Reduction (%)", "연구실 레벨": "Research Lab Level", "계산하기": "Calculate", "현재 연구 레벨 합계": "Current Research Level Total", "T10 최소트리 기준": "T10 Minimum Tree Target", "T10까지 남은 필수 단계": "Required Steps Remaining to T10", "필요 식량": "Food Needed", "필요 목재": "Timber Needed", "필요 약초": "Herbs Needed", "필요 연구 스크롤": "Research Scrolls Needed", "T10 해금 가능 여부": "T10 Unlock Availability", "보유량 추천 순서": "Recommended Order", "T10 최소트리": "T10 Minimum Tree", "계산하기를 눌러주세요.": "Press Calculate to see the results.", "저장 / 불러오기": "Save / Load", "같은 브라우저에서는 자동 저장됩니다. 다른 기기로 옮길 때는 저장 코드를 사용하세요.": "Progress is saved automatically in this browser. Use a save code when moving to another device.", "같은 브라우저에서는 자동 저장됩니다. 다른 기기로 옮길 때는 저장코드를 사용하세요.": "Progress is saved automatically in this browser. Use a save code when moving to another device.", "저장코드 만들기": "Create Save Code", "코드 복사": "Copy Code", "저장코드 불러오기": "Load Save Code", "저장값 초기화": "Clear Saved Data", "저장코드 표시 / 불러올 코드 붙여넣기": "Save code / Paste a code to load", "현재 보유량으로 추가 진행 가능한 최소트리 연구가 없습니다.": "No additional Minimum Tree research can be completed with your current resources.", "보유 자원으로 진행 가능한 연구가 없습니다.": "No research can be progressed with the available resources.", "필요량 계산은 완료되었습니다. 추천 순서 계산 중 오류가 발생했습니다.": "Required resources were calculated, but the recommended order could not be generated.", "연구 완료": "Research Complete", "가능": "Available", "아직 부족": "Not Enough", "T10 미도달": "T10 Not Reached", "T10 해금 가능": "T10 Unlock Available", "모든 저장값을 초기화할까요?": "Clear all saved data?", "불러왔어요.": "Loaded.", "저장코드를 복사했어요.": "Save code copied.", "저장코드를 확인해주세요.": "Please check the save code.", "체력 강화 1": "HP Enhancement I", "공격력 강화 1": "Attack Enhancement I", "방어력 강화 1": "Defense Enhancement I", "체력 강화 2": "HP Enhancement II", "공격력 강화 2": "Attack Enhancement II", "방어력 강화 2": "Defense Enhancement II", "체력 강화 3": "HP Enhancement III", "공격력 강화 3": "Attack Enhancement III", "방어력 강화 3": "Defense Enhancement III", "공격 훈련 7": "Attack Training VII", "공격 훈련 8": "Attack Training VIII", "방어 훈련 7": "Defense Training VII", "방어 훈련 8": "Defense Training VIII", "생존 훈련 7": "Survival Training VII", "생존 훈련 8": "Survival Training VIII", "신속 응급 처치 1": "Rapid First Aid I", "병원 확장 1": "Hospital Expansion I", "생존 기술": "Survival Techniques", "전문 특성 1": "Specialized Traits I", "훈련장 확장 1": "Training Ground Expansion I", "사기": "Morale", "Lv.10 병사": "Lv.10 Troops", "최소": "Min", "단계": "steps", "장": "scrolls"};
+let uiLanguage="ko";
+
+function toEnglish(text){
+ let x=String(text);
+ x=x.replace(/(?:현재 )?보유량으로 최소트리 필수 연구를\s*(\d+)단계 더 진행 가능합니다\s*·\s*최소트리 진행\s*(\d+)\s*→\s*(\d+)\/90\s*·\s*T10 미도달/g,
+ "With your current resources, you can complete $1 more required step(s) · Minimum Tree progress: $2 → $3/90 · T10 not reached");
+ x=x.replace(/(?:현재 )?보유량으로 최소트리 필수 연구를\s*(\d+)단계 더 진행 가능합니다\s*·\s*최소트리 진행\s*(\d+)\s*→\s*(\d+)\/90\s*·\s*T10 해금 가능/g,
+ "With your current resources, you can complete $1 more required step(s) · Minimum Tree progress: $2 → $3/90 · T10 unlock available");
+ for(const [ko,en] of Object.entries(EN_DICT).sort((a,b)=>b[0].length-a[0].length)) x=x.split(ko).join(en);
+ return x.replace(/(\d+)steps/g,"$1 steps").replace(/(\d+)scrolls/g,"$1 scrolls");
+}
+
+function applyLanguage(lang){
+ uiLanguage=lang==="en"?"en":"ko";
+ document.documentElement.lang=uiLanguage;
+ document.title=uiLanguage==="en"?EN_DICT["정예 부대 T10 최소트리 계산기"]:"정예 부대 T10 최소트리 계산기";
+
+ // Text nodes: remember the TRUE Korean source. Never reverse-translate English.
+ const root=document.querySelector("main.wrap");
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+ const nodes=[]; let node;
+ while(node=walker.nextNode()) nodes.push(node);
+ nodes.forEach(n=>{
+   if(n.parentElement && n.parentElement.closest("#languageSelect")) return;
+   // App-generated Korean after calculate/render becomes the new source.
+   if(n.__koSource===undefined) n.__koSource=n.nodeValue;
+   else {
+     const expectedEnglish=toEnglish(n.__koSource);
+     if(n.nodeValue!==n.__koSource && n.nodeValue!==expectedEnglish) n.__koSource=n.nodeValue;
+   }
+   n.nodeValue=uiLanguage==="en"?toEnglish(n.__koSource):n.__koSource;
+ });
+
+ // Attributes
+ root.querySelectorAll("[aria-label],[title]").forEach(el=>{
+   for(const a of ["aria-label","title"]){
+     if(!el.hasAttribute(a)) continue;
+     const key="ko"+a.replace("-","");
+     if(el.dataset[key]===undefined) el.dataset[key]=el.getAttribute(a);
+     el.setAttribute(a,uiLanguage==="en"?toEnglish(el.dataset[key]):el.dataset[key]);
+   }
+ });
+
+ // IMPORTANT: save-code box is set explicitly every switch.
+ const codeBox=root.querySelector("textarea");
+ if(codeBox){
+   codeBox.setAttribute("placeholder",uiLanguage==="en"
+     ?"Save code / Paste a code to load"
+     :"저장코드 표시 / 불러올 코드 붙여넣기");
+ }
+
+ document.getElementById("languageSelect").value=uiLanguage;
+ try{localStorage.setItem("eliteT10Language",uiLanguage)}catch(e){}
+}
+
+const languageSelect=document.getElementById("languageSelect");
+languageSelect.addEventListener("change",()=>applyLanguage(languageSelect.value));
+try{uiLanguage=localStorage.getItem("eliteT10Language")==="en"?"en":"ko"}catch(e){uiLanguage="ko"}
+
+
+const __calc=calculate;
+calculate=function(){const r=__calc.apply(this,arguments);applyLanguage(uiLanguage);return r;};
+const __render=renderTree;
+renderTree=function(){const r=__render.apply(this,arguments);applyLanguage(uiLanguage);return r;};
+const __minlist=makeMinimumList;
+makeMinimumList=function(){const r=__minlist.apply(this,arguments);applyLanguage(uiLanguage);return r;};
+
 load();
+applyLanguage(uiLanguage);
 </script>
 </body>
 </html>
